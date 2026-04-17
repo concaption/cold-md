@@ -1,64 +1,75 @@
-# cold.md
+<!-- Updated: 2026-04-17 -->
 
-**One markdown file that tells an AI agent how to do your cold outreach.**
+![cold.md](assets/cover.png)
+
+# cold.md - One markdown file that runs your cold outreach
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Spec: CC-BY-4.0](https://img.shields.io/badge/Spec-CC--BY--4.0-blue.svg)](https://creativecommons.org/licenses/by/4.0/)
+[![Claude Code](https://img.shields.io/badge/Claude%20Code-Skill%20%2B%20Plugin-C2410C)](https://claude.ai/claude-code)
+[![Site](https://img.shields.io/badge/cold.md-live-1a1512)](https://cold.md)
+
+An opinionated, executable spec for AI-driven cold outreach. One file. Eight sections. Any conforming agent reads it and produces outreach that matches.
 
 ```
 # My Product - cold.md
 
-## Identity     - who's sending
-## Audience     - ICP + disqualifiers
-## Value        - the offer, in one sentence
-## Voice        - dos and don'ts, obeyed verbatim
-## Proof        - facts the agent may cite
-## Sequence     - slots (opener, bump, breakup) with constraints
-## Objections   - preferred replies to common pushbacks
-## Banned       - phrases that never appear
+## Identity    - who's sending
+## Audience    - ICP + disqualifiers
+## Value       - the offer, in one sentence
+## Voice       - dos and don'ts, obeyed verbatim
+## Proof       - facts the agent may cite
+## Sequence    - opener, bump, breakup slots
+## Objections  - preferred replies to pushbacks
+## Banned      - phrases that never appear
 ```
-
-That's it. One file, eight sections, any conforming agent reads it and produces outreach that matches.
 
 ## Why
 
-Every AI cold-outreach tool today reinvents the same inputs - inside its own UI, database, or prompt template. The inputs don't travel. You can't `git diff` them. You can't version them. You can't hand them to a different agent next month.
+Every AI cold-outreach tool today reinvents the same inputs - ICP, voice, value prop, objections, banned words - inside its own UI, database, or prompt template. The inputs don't travel. You can't `git diff` them. You can't version them. You can't hand them to a different agent next month.
 
-`cold.md` is the portable, executable, vendor-neutral source of truth for your outbound.
+`cold.md` is one file, committed to a repo, that any conforming agent reads before it writes a single email.
 
 - **One file, in your repo.** Not a SaaS form. Not a prompt library. Not a Notion doc.
 - **Executable, not descriptive.** Banned phrases are a hard filter. Voice rules are enforced verbatim. Proof is the only list the agent can cite.
 - **Vendor-neutral.** Any tool that implements the spec can read the file. Switch platforms, keep your playbook.
 
+## Install in 30 seconds
+
+```bash
+curl -fsSL https://cold.md/install | bash
+```
+
+What it does:
+1. Installs the `cold-outreach` Claude Code skill to `~/.claude/skills/`.
+2. Offers to scaffold `cold.md` in your current repo (pass `--scaffold` to auto-accept).
+3. Optionally installs the FoxReach plugin (pass `--with-foxreach`).
+
+Idempotent - safe to re-run. Source: [`site/public/install.sh`](site/public/install.sh).
+
 ## Quick start
 
-1. Copy [`examples/minimal.cold.md`](./examples/minimal.cold.md) to your repo as `cold.md`.
-2. Edit every section for your product.
-3. Install the [Claude Code skill](./skill/cold-outreach/) (or use any conforming agent).
-4. Ask Claude: *"write an opener for [Lead Name] at [Company]"*. The skill reads `cold.md` and drafts it.
+```bash
+# Install the skill
+curl -fsSL https://cold.md/install | bash -s -- --scaffold
+
+# Edit the generated cold.md for your product
+$EDITOR ./cold.md
+
+# Then in Claude Code
+"Draft an opener for Jane Smith, Head of Growth at Acme SaaS"
+```
+
+The `cold-outreach` skill reads `./cold.md`, drafts a spec-conformant opener, and refuses to ship output that violates your banned list, voice rules, or audience filter.
 
 ## Examples
 
-- [`examples/minimal.cold.md`](./examples/minimal.cold.md) - starter template, fill in every line.
-- [`examples/foxreach.cold.md`](./examples/foxreach.cold.md) - the real cold.md behind [FoxReach](https://foxreach.io). Eat our own food.
+- [`examples/minimal.cold.md`](examples/minimal.cold.md) - starter template, fill in every line.
+- [`examples/foxreach.cold.md`](examples/foxreach.cold.md) - the real cold.md behind [FoxReach](https://foxreach.io). Eat our own food.
 
 ## Spec
 
-The canonical spec is at [`spec/cold-md-v0.md`](./spec/cold-md-v0.md). Also published at [cold.md](https://cold.md).
-
-## Claude Code skill
-
-The reference agent is a Claude Code skill at [`skill/cold-outreach/`](./skill/cold-outreach/). It reads a `cold.md` file, drafts messages that obey the spec, and refuses to ship output that violates it.
-
-Install:
-
-```bash
-# Copy the skill into your Claude Code skills directory
-cp -r skill/cold-outreach ~/.claude/skills/
-```
-
-Use:
-
-```
-/cold-outreach write an opener for Jane Smith, Head of Growth at Acme SaaS
-```
+The canonical spec is at [`spec/cold-md-v0.md`](spec/cold-md-v0.md). Also published at [cold.md](https://cold.md).
 
 ## What a conforming agent does
 
@@ -74,18 +85,58 @@ Silent degradation is a bug. Surface conflicts, don't paper over them.
 
 ## Implementations
 
-- **[Claude Code skill](./skill/cold-outreach/)** (this repo) - reference implementation.
-- **[FoxReach](https://foxreach.io)** - commercial platform that runs your `cold.md` at scale: warmup, multi-inbox orchestration, reply triage, booked-calls dashboard.
+### cold-outreach skill (free)
 
-Build one? Open a PR and add yourself.
+The reference Claude Code skill at [`skill/cold-outreach/`](skill/cold-outreach/). Reads your cold.md, drafts messages obeying the spec, refuses non-conforming output.
+
+```bash
+cp -R skill/cold-outreach ~/.claude/skills/
+```
+
+### FoxReach plugin (commercial)
+
+Run your cold.md at scale. The Claude Code plugin at [`plugin/foxreach/`](plugin/foxreach/) bundles the open skill plus `foxreach-ops` - multi-inbox warmup, reply triage, booked-calls orchestration via the [FoxReach API](https://foxreach.io).
+
+```bash
+curl -fsSL https://cold.md/install | bash -s -- --with-foxreach
+```
+
+Slash commands added:
+
+```
+/cold draft <lead>      Draft a spec-conformant opener
+/cold bump <lead>       Draft the bump (slot 2)
+/cold breakup <lead>    Draft the breakup (slot 3)
+/cold lint              Check cold.md against the v0 spec
+/cold send <csv>        Queue a campaign via FoxReach API
+/cold triage            Pull latest triage buckets
+/cold audit <domain>    Run a deliverability audit
+```
+
+Requires `FOXREACH_API_KEY`. [Free tier signup](https://foxreach.io/signup).
+
+**Build an implementation against the spec?** Open a PR and add yourself.
+
+## Repository layout
+
+```
+spec/            The canonical spec. Versioned. spec/cold-md-v0.md is current.
+examples/        Real cold.md files.
+skill/           Free Claude Code skill (cold-outreach).
+plugin/          FoxReach commercial Claude Code plugin.
+site/            Next.js site at cold.md.
+assets/          Cover image, branding.
+memory/          Architecture + changelog.
+```
 
 ## Contributing
 
-The spec is the product. Every change to `spec/` is a commercial decision - open an issue first. Examples, skill improvements, and docs: PRs welcome.
+The spec is the product. Every change to `spec/` is a commercial decision - open an issue first. Examples, skill improvements, docs, and new implementations: PRs welcome.
 
 ## License
 
-Spec: CC-BY-4.0. Code: MIT. Use it, fork it, ship it.
+- **Code** (skill, plugin, site): [MIT](LICENSE)
+- **Spec** (`spec/*`): [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/)
 
 ## Sponsor
 

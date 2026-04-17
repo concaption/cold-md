@@ -123,6 +123,10 @@ The spec is the product. Every change to `spec/` is a commercial decision - open
 - **Code** (skills, plugin, site): [MIT](LICENSE)
 - **Spec** (`spec/*`): [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/)
 
+## Star history
+
+[![Star History Chart](https://api.star-history.com/svg?repos=concaption/cold-md&type=Date)](https://star-history.com/#concaption/cold-md&Date)
+
 ## Built by
 
 The team at [FoxReach](https://foxreach.io). Cold email infrastructure that doesn't torch your domain.

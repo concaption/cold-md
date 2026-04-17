@@ -1,5 +1,8 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import CopyButton from '../components/CopyButton'
+
+const INSTALL_CMD = 'curl -fsSL https://cold.md/install | bash'
 
 const SKILLS = [
   { num: '01', name: 'cold-icp',    desc: 'Build your ICP from a URL (scrape homepage, case studies) or interactive Q&A. Writes icp.md.',               status: 'live', needsKey: false },
@@ -104,13 +107,16 @@ export default function Home() {
           </p>
 
           <div className="rounded-xl border border-line bg-ink text-paper overflow-hidden">
-            <div className="flex items-center gap-2 px-4 py-3 border-b border-paper/10 bg-paper/5">
-              <div className="flex gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-paper/20" />
-                <span className="w-2.5 h-2.5 rounded-full bg-paper/20" />
-                <span className="w-2.5 h-2.5 rounded-full bg-paper/20" />
+            <div className="flex items-center justify-between px-4 py-3 border-b border-paper/10 bg-paper/5">
+              <div className="flex items-center gap-2">
+                <div className="flex gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-paper/20" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-paper/20" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-paper/20" />
+                </div>
+                <span className="font-mono text-xs text-paper/50 ml-2">terminal</span>
               </div>
-              <span className="font-mono text-xs text-paper/50 ml-2">terminal</span>
+              <CopyButton text={CMD_STACK.join('\n')} label="copy loop" />
             </div>
             <pre className="p-5 sm:p-8 text-sm sm:text-base font-mono leading-loose overflow-x-auto no-scrollbar">
               <code>
@@ -173,7 +179,7 @@ export default function Home() {
           <div className="rounded-xl border border-paper/10 bg-paper/5 overflow-hidden max-w-3xl">
             <div className="px-5 py-3 border-b border-paper/10 flex items-center justify-between">
               <span className="font-mono text-xs text-paper/50">terminal</span>
-              <span className="font-mono text-xs text-fox-light">copy</span>
+              <CopyButton text={INSTALL_CMD} label="copy command" />
             </div>
             <pre className="p-6 text-sm sm:text-base font-mono overflow-x-auto no-scrollbar">
               <code>

@@ -18,7 +18,7 @@ set -euo pipefail
 REPO_TARBALL="https://github.com/concaption/cold-md/archive/refs/heads/main.tar.gz"
 SKILL_DIR="${HOME}/.claude/skills"
 PLUGIN_DIR="${HOME}/.claude/plugins"
-TMPDIR="$(mktemp -d -t cold-md-install.XXXXXX)"
+TMPDIR="$(mktemp -d -t coldmd-setup.XXXXXX)"
 trap 'rm -rf "$TMPDIR"' EXIT
 
 WITH_FOXREACH=true   # default: install FoxReach plugin
@@ -96,8 +96,11 @@ check_deps() {
 fetch_repo() {
   log "Downloading cold-md..."
   curl -fsSL "$REPO_TARBALL" | tar -xz -C "$TMPDIR"
-  EXTRACTED="$(find "$TMPDIR" -maxdepth 1 -type d -name 'cold-md-*' | head -1)"
+  # -mindepth 1 avoids matching TMPDIR itself even if its name happens to match.
+  EXTRACTED="$(find "$TMPDIR" -mindepth 1 -maxdepth 1 -type d -name 'cold-md-*' | head -1)"
   [ -n "$EXTRACTED" ] || die "failed to extract repo"
+  [ -d "$EXTRACTED/skills" ] || die "tarball missing skills/ - expected $EXTRACTED/skills"
+  [ -d "$EXTRACTED/plugin/cold-md" ] || die "tarball missing plugin/cold-md"
 }
 
 install_skills() {

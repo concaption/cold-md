@@ -3,18 +3,21 @@ import './globals.css'
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://cold.md'),
-  title: 'cold.md - One markdown file that runs your cold outreach',
+  title: 'cold.md - The Claude Code plugin that runs your cold outreach',
   description:
-    'An opinionated, executable spec for AI-driven cold outreach. One file, eight sections. Any conforming agent reads it and produces outreach that matches.',
+    'Six Claude Code skills for cold outreach: ICP builder, lead sourcing, drafter, sender, reply triage, reporter. Reads a portable cold.md spec. Backed by FoxReach.',
   keywords: [
     'cold.md',
+    'claude code cold email',
+    'claude code cold outreach',
+    'cold email plugin',
+    'cold email claude code skill',
+    'AI cold email agent',
+    'autonomous SDR claude',
     'cold email spec',
-    'AI cold outreach',
-    'cold outreach spec',
-    'agents markdown',
-    'llms.txt cold email',
+    'cold email markdown',
+    'LangChain cold email',
     'FoxReach',
-    'Claude Code skill',
   ],
   openGraph: {
     title: 'cold.md - Your cold outreach, in one file',

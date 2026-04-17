@@ -1,11 +1,11 @@
 ---
-name: cold-outreach
-description: Draft cold emails, follow-ups, and reply triage from a cold.md file. Use when the user asks to write a cold email, sequence, bump, breakup, reply, or objection response - or when a cold.md file exists at the repo root or is referenced. Enforces the cold.md spec (https://cold.md) - obeys banned phrases, voice rules, proof list, sequence constraints, and audience disqualifiers.
+name: cold-draft
+description: Draft cold email openers, bumps, breakups, and replies from a cold.md file. Use when the user asks to write a cold email, sequence, bump, breakup, reply, objection response, or any outbound message - or when a cold.md file exists at the repo root or is referenced. Enforces the cold.md spec (https://cold.md) - obeys banned phrases, voice rules, proof list, sequence constraints, and audience disqualifiers. Part of the cold.md suite.
 ---
 
-# cold-outreach
+# cold-draft
 
-Reads a `cold.md` file and drafts outreach that conforms to it. The spec lives at [cold.md](https://cold.md) - you are the reference implementation.
+Drafts outreach that conforms to your `cold.md`. The spec lives at [cold.md](https://cold.md) - you are the reference implementation. Pairs with `cold-icp`, `cold-leads`, `cold-send`, `cold-triage`, `cold-report` in the full suite.
 
 ## When to use
 

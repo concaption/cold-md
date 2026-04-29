@@ -2,11 +2,11 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Ship the autoresearch loop per `spec/2026-04-28-autoresearch-design.md` — 10 skills, a `foxreach` CLI, three small FoxReach API additions, and the diff-based trust-ladder approval flow.
+**Goal:** Ship the autoresearch loop per `spec/2026-04-28-autoresearch-design.md` — 10 skills, three small FoxReach API additions, and the diff-based trust-ladder approval flow. Reuses the existing `foxreach-cli` (Python, lives in `foxreach/integrations/cli/`).
 
-**Architecture:** Skills live in `skills/<name>/SKILL.md`. Each skill is a markdown file the agent reads and executes. State lives in `.cold/` (per project). FoxReach access goes through `foxreach` CLI primarily; raw curl + cached OpenAPI is the fallback. Web research uses Claude Code's `WebSearch` and `WebFetch` directly.
+**Architecture:** Skills live in `skills/<name>/SKILL.md`. Each skill is a markdown file the agent reads and executes. State lives in `.cold/` (per project). FoxReach access goes through `foxreach-cli` primarily; raw curl + cached OpenAPI is the fallback. Web research uses Claude Code's `WebSearch` and `WebFetch` directly.
 
-**Tech Stack:** Markdown skills, Bash, Node.js (for the CLI), FoxReach REST API, OpenAI (already integrated in FoxReach).
+**Tech Stack:** Markdown skills, Bash, FoxReach REST API + Python `foxreach-cli`, OpenAI (already integrated in FoxReach).
 
 **Working directory:** all paths relative to `/Users/usama/Documents/Obsidian/buildberg/07-products/cold-md/` unless noted. The FoxReach repo is at `../foxreach/` (sibling).
 
@@ -17,7 +17,7 @@
 | Phase | Scope | Shippable? |
 |---|---|---|
 | 0 | FoxReach API additions (3 endpoints) | yes — backend deploys independently |
-| 1 | `foxreach` CLI v1 (covers all hot endpoints) | yes — installable separately |
+| 1 | Verify existing `foxreach-cli` install + agent fallback contract | yes — already on PyPI |
 | 2 | `/cold init` + `.cold/` scaffold + config + OpenAPI cache | yes |
 | 3 | `cold-icp` + `cold-offer` (web research, policy-level) | yes |
 | 4 | `cold-leads` + `cold-draft` + `cold-send` (full sender path) | yes |
@@ -54,18 +54,15 @@ Each phase ends with: type-check (where applicable) → manual verify against ac
 - `plugin/cold-md/cold.md` — register new skills + commands
 - Mirror all of `skills/` into `plugin/cold-md/skills/` so the installer picks them up
 
-**`foxreach` CLI (new repo subfolder):**
-- `cli/package.json`
-- `cli/bin/foxreach.js`
-- `cli/src/client.js` — axios wrapper
-- `cli/src/commands/*.js` — one file per resource
-- `cli/README.md`
-- `cli/install.sh` — npm-installable
+**`foxreach-cli` (already exists, lives in `foxreach/integrations/cli/`):**
+- Python Click CLI published as `pip install foxreach-cli`
+- We extended it in Task 0.2 to support the new `inbox categorize-stats` subcommand
+- Skills shell out to it via `subprocess`
 
-**FoxReach backend additions:**
-- `../foxreach/backend/app/routers/inbox.py` — add `categorize_stats` endpoint
-- `../foxreach/backend/app/main.py` — confirm `/openapi.json` is exposed + CORS-allowed for `cold.md` domain
-- `../foxreach/backend/app/routers/leads.py` — add optional `score-fit` endpoint
+**FoxReach backend additions (in the foxreach repo, separate PRs):**
+- `../foxreach/backend/app/main.py` — `/openapi-public.json` filtered to `/api/v1/*` (Task 0.1) ✓ shipped
+- `../foxreach/backend/app/routers/v1/inbox.py` — `categorize-stats` endpoint (Task 0.2) ✓ shipped
+- (Optional, deferred) `../foxreach/backend/app/routers/v1/leads.py` — `score-fit` endpoint
 
 ---
 
@@ -308,291 +305,61 @@ No changes. Note in `.cold/notes.md` (created in phase 2): "score-fit endpoint d
 
 ---
 
-# Phase 1 — `foxreach` CLI
+# Phase 1 — `foxreach` CLI (already exists)
 
-### Task 1.1: Bootstrap CLI package
+The CLI lives at `foxreach/integrations/cli/` (Click-based Python, published
+as `foxreach-cli` on PyPI). It wraps every public `/api/v1/*` endpoint:
+accounts, analytics, campaigns, inbox, leads, sequences, templates, webhooks.
+The autoresearch plugin shells out to it via `subprocess`.
 
-**Files:**
-- Create: `cli/package.json`
-- Create: `cli/bin/foxreach.js`
-- Create: `cli/src/client.js`
-- Create: `cli/README.md`
+We extended it as part of Task 0.2 to support the new
+`inbox categorize-stats` endpoint.
 
-- [ ] **Step 1: Create `cli/package.json`**
+### Task 1.1: Verify `foxreach-cli` installed
 
-```json
-{
-  "name": "@cold-md/foxreach-cli",
-  "version": "0.1.0",
-  "description": "Thin CLI wrapper around the FoxReach API. Used by the cold.md autoresearch plugin; works standalone too.",
-  "bin": {
-    "foxreach": "./bin/foxreach.js"
-  },
-  "main": "./src/client.js",
-  "type": "module",
-  "engines": { "node": ">=18" },
-  "dependencies": {
-    "axios": "^1.6.0",
-    "commander": "^11.0.0"
-  },
-  "license": "MIT",
-  "repository": "concaption/cold-md"
-}
-```
+**Files:** none (verification only)
 
-- [ ] **Step 2: Create `cli/src/client.js`**
-
-```javascript
-import axios from 'axios'
-
-const BASE_URL = process.env.FOXREACH_BASE_URL || 'https://api.foxreach.io'
-const API_KEY = process.env.FOXREACH_API_KEY
-
-if (!API_KEY) {
-  console.error('FOXREACH_API_KEY is not set. Get one at https://foxreach.io/app/settings?tab=api')
-  process.exit(1)
-}
-
-export const client = axios.create({
-  baseURL: `${BASE_URL}/api/v1`,
-  headers: {
-    'Authorization': `Bearer ${API_KEY}`,
-    'Content-Type': 'application/json',
-  },
-  timeout: 60_000,
-})
-
-// Print as JSON for downstream consumption (skills pipe to jq)
-export function output(data) {
-  process.stdout.write(JSON.stringify(data, null, 2) + '\n')
-}
-
-export function fail(err) {
-  if (err.response) {
-    process.stderr.write(`HTTP ${err.response.status}: ${JSON.stringify(err.response.data)}\n`)
-  } else {
-    process.stderr.write(`${err.message}\n`)
-  }
-  process.exit(1)
-}
-```
-
-- [ ] **Step 3: Create `cli/bin/foxreach.js`**
-
-```javascript
-#!/usr/bin/env node
-import { Command } from 'commander'
-import { registerCampaigns } from '../src/commands/campaigns.js'
-import { registerSequences } from '../src/commands/sequences.js'
-import { registerVariants } from '../src/commands/variants.js'
-import { registerLeads } from '../src/commands/leads.js'
-import { registerInbox } from '../src/commands/inbox.js'
-import { registerAccounts } from '../src/commands/accounts.js'
-import { registerTemplates } from '../src/commands/templates.js'
-import { registerAnalytics } from '../src/commands/analytics.js'
-import { registerOpenapi } from '../src/commands/openapi.js'
-import { registerDocs } from '../src/commands/docs.js'
-
-const program = new Command()
-program
-  .name('foxreach')
-  .description('Thin CLI wrapper around the FoxReach API')
-  .version('0.1.0')
-
-registerOpenapi(program)
-registerDocs(program)
-registerAccounts(program)
-registerCampaigns(program)
-registerSequences(program)
-registerVariants(program)
-registerLeads(program)
-registerInbox(program)
-registerTemplates(program)
-registerAnalytics(program)
-
-program.parse()
-```
-
-Make executable: `chmod +x cli/bin/foxreach.js`.
-
-- [ ] **Step 4: Commit**
+- [ ] **Step 1: Check install**
 
 ```bash
-git add cli/package.json cli/bin/foxreach.js cli/src/client.js && git commit -m "feat(cli): bootstrap foxreach CLI package"
+which foxreach && foxreach --version
 ```
 
----
+If missing: `pip install foxreach-cli`.
 
-### Task 1.2: Implement command modules
-
-**Files:**
-- Create one file per resource in `cli/src/commands/`
-
-For each resource, follow this template (showing campaigns; replicate for sequences, variants, leads, inbox, accounts, templates, analytics):
-
-- [ ] **Step 1: Create `cli/src/commands/campaigns.js`**
-
-```javascript
-import { client, output, fail } from '../client.js'
-import fs from 'fs'
-
-export function registerCampaigns(program) {
-  const cmd = program.command('campaigns').description('FoxReach campaigns')
-
-  cmd.command('list')
-    .option('--status <s>', 'filter by status')
-    .action(async (opts) => {
-      try {
-        const { data } = await client.get('/campaigns', { params: opts })
-        output(data)
-      } catch (e) { fail(e) }
-    })
-
-  cmd.command('get <id>')
-    .action(async (id) => {
-      try {
-        const { data } = await client.get(`/campaigns/${id}`)
-        output(data)
-      } catch (e) { fail(e) }
-    })
-
-  cmd.command('create')
-    .requiredOption('--json <file>', 'JSON body file (use @- for stdin)')
-    .action(async ({ json }) => {
-      try {
-        const body = json === '@-'
-          ? JSON.parse(fs.readFileSync(0, 'utf-8'))
-          : JSON.parse(fs.readFileSync(json.replace(/^@/, ''), 'utf-8'))
-        const { data } = await client.post('/campaigns', body)
-        output(data)
-      } catch (e) { fail(e) }
-    })
-
-  cmd.command('start <id>')
-    .action(async (id) => {
-      try {
-        const { data } = await client.post(`/campaigns/${id}/start`)
-        output(data)
-      } catch (e) { fail(e) }
-    })
-
-  cmd.command('pause <id>')
-    .action(async (id) => {
-      try {
-        const { data } = await client.post(`/campaigns/${id}/pause`)
-        output(data)
-      } catch (e) { fail(e) }
-    })
-
-  cmd.command('delete <id>')
-    .action(async (id) => {
-      try {
-        await client.delete(`/campaigns/${id}`)
-        output({ deleted: true, id })
-      } catch (e) { fail(e) }
-    })
-}
-```
-
-- [ ] **Step 2: Create the other command modules**
-
-Apply the same pattern. Each needs ~6-10 subcommands matching the FoxReach endpoints. Reference: `../foxreach/frontend/lib/api.ts` for the full surface. Specifically:
-
-- `sequences.js` — list, add, update, delete (per campaign)
-- `variants.js` — list, add, update, delete, stats (per campaign+sequence)
-- `leads.js` — list, get, create, update, delete, import (CSV upload), bulk-tag, bulk-untag, list-ids
-- `inbox.js` — threads (list), get, mark-read, categorize-stats (new endpoint), bulk-update, send-reply
-- `accounts.js` — list, get, create, update, delete, test
-- `templates.js` — list, get, create, update, delete
-- `analytics.js` — campaign-stats, account-stats, workspace-stats
-- `openapi.js` — fetches `/openapi.json` and prints (used by skills as fallback)
-- `docs.js` — opens `https://docs.foxreach.io/api-reference/<topic>` in default browser; or `--print` to fetch HTML and print
-
-> Important: every command output is JSON to stdout, errors to stderr. This makes piping to `jq` and parsing in skills trivial.
-
-- [ ] **Step 3: Test against staging or local FoxReach**
+- [ ] **Step 2: Verify auth**
 
 ```bash
-cd cli && npm install
-FOXREACH_API_KEY=otr_test_... node bin/foxreach.js campaigns list
+export FOXREACH_API_KEY=otr_...
+foxreach config show
+foxreach campaigns list  # must succeed
 ```
 
-Expected: JSON list of campaigns or empty array.
-
-- [ ] **Step 4: Commit**
+- [ ] **Step 3: Verify the new categorize-stats subcommand**
 
 ```bash
-git add cli/src/commands/ && git commit -m "feat(cli): implement all command modules"
+foxreach inbox categorize-stats --help
 ```
 
----
+Expected: shows `--campaign`, `--sequence`, `--variant`, `--group-by`,
+`--from`, `--to` options.
 
-### Task 1.3: Distribution (npm publish or local install)
+If missing: `pip install --upgrade foxreach-cli` (the v0.3 build adds it).
 
-**Files:** `cli/install.sh` (optional)
+### Task 1.2: Skill-side fallback contract
 
-- [ ] **Step 1: Create install script**
+**Files:** all skill files reference this contract.
 
-Create `cli/install.sh`:
+When a skill calls `foxreach <subcommand>` and the CLI is not installed
+or fails, it falls back in this order:
 
-```bash
-#!/usr/bin/env bash
-set -e
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-cd "$DIR"
-npm install --production
-npm link  # symlinks `foxreach` to PATH
-echo "foxreach CLI installed. Try: foxreach campaigns list"
-```
+1. **Cached OpenAPI**: `cat .cold/docs-cache/foxreach-openapi.json | jq '.paths."/<path>"'`
+2. **Raw curl**: `curl -H "Authorization: Bearer $FOXREACH_API_KEY" $FOXREACH_BASE_URL/api/v1/<path>`
+3. **WebFetch docs**: `WebFetch https://docs.foxreach.io/api-reference/<resource>/<action>`
+4. **Surface error**: print what was tried and stop.
 
-- [ ] **Step 2: Smoke test from outside the cli dir**
-
-```bash
-chmod +x cli/install.sh
-./cli/install.sh
-foxreach --help
-```
-
-Expected: help output with all commands.
-
-- [ ] **Step 3: Document in CLI README**
-
-Quick `cli/README.md`:
-
-```markdown
-# foxreach CLI
-
-Thin wrapper around the FoxReach API. Used by the cold.md autoresearch plugin; works standalone.
-
-## Install
-\`\`\`
-bash <(curl -fsSL https://cold.md/cli/install)
-\`\`\`
-
-Or local: `./cli/install.sh`.
-
-## Auth
-Set `FOXREACH_API_KEY=otr_...` in your env.
-
-## Commands
-\`\`\`
-foxreach openapi
-foxreach docs <topic>
-foxreach campaigns list
-foxreach sequences add --campaign <id> --json @file
-...
-\`\`\`
-
-Run `foxreach <resource> --help` for full subcommand list.
-```
-
-- [ ] **Step 4: Commit**
-
-```bash
-git add cli/install.sh cli/README.md && git commit -m "feat(cli): install script + README"
-```
-
----
+Skills must NEVER guess endpoint paths — only use ones that appear in
+the cached OpenAPI or the documented Mintlify reference.
 
 # Phase 2 — `/cold init` + `.cold/` scaffold
 

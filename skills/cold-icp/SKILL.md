@@ -97,6 +97,81 @@ A lead passes if:
 [Any context, reasoning, edge cases]
 ```
 
+## Step 3 — Web research validation (autoresearch v0.2+)
+
+Read `.cold/config.json`. If `research.policyLevelEnabled` is `true` (default), run up to `maxQueriesPerInvocation` (default 5) WebSearch queries to validate the drafted ICP **before** writing it. The goal: catch a niche that's too narrow, titles that don't really exist at scale, or disqualifiers that aren't actually meaningful.
+
+If `.cold/config.json` doesn't exist (user skipped `/cold init`), skip this step gracefully — the skill still works without it.
+
+### Queries to run
+
+For each query, capture: query string, top 3 result titles + URLs, a 1-sentence "what this tells us".
+
+1. **Cluster size — competitor companies in the vertical**
+   `<vertical> companies <region>` (e.g. `"B2B SaaS warmup tools US"`)
+   Tells us: is the niche big enough? <3 results = niche too narrow.
+
+2. **Title prevalence**
+   `"<title>" jobs <vertical>` (e.g. `"Head of Demand Gen" jobs B2B SaaS`)
+   Tells us: is this title common in this niche, or rare?
+
+3. **Pain language in the wild**
+   `"<vertical> <pain>" reddit OR forum site:reddit.com`
+   Surfaces real complaints — borrow phrasing for the offer.
+
+4. **Case study patterns**
+   `case study <vertical> <pain> 2026`
+   Finds proof points the user can cite.
+
+5. **Disqualifier validation**
+   `"<disqualifier-trait>" <vertical>`
+   Confirms the disqualifier is meaningful (i.e. that segment really exists and is wrong-fit).
+
+### Save findings
+
+Write to `.cold/research/icp-validation-<YYYY-MM-DD>.md`:
+
+```markdown
+# ICP validation — <YYYY-MM-DD>
+
+## Source
+- ICP: ./icp.md
+- Queries run: 5 of 5
+
+## Findings
+
+### Cluster size: <vertical> companies
+- Query: "..."
+- Top results: ...
+- Insight: ...
+
+### Title prevalence: <title>
+...
+
+## Risks
+- [List anything the research flagged: niche too narrow, title rare, etc.]
+
+## Suggested icp.md edits
+- [Concrete proposed changes; user accepts or rejects]
+```
+
+### Surface to user
+
+Print a 5-line summary:
+
+```
+ICP validation complete (5 queries):
+  ✓ Cluster size: ~12 competitor companies in the niche (healthy)
+  ✓ Title "Head of Demand Gen" appears in 1,200+ recent job posts
+  ✓ Pain language: "Smartlead bounces" mentioned in r/coldemail
+  ⚠ Disqualifier "agencies" — niche has many agency consumers; consider softening
+  ✓ Found 3 case-study patterns for proof points
+
+Apply suggested edits to icp.md? (Y/n/show)
+```
+
+If user accepts: edit icp.md. If shows: print the diff. If no: leave as-is, save findings only.
+
 ## Validation
 
 After writing `icp.md`:

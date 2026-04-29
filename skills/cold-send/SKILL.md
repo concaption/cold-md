@@ -169,7 +169,7 @@ Watch progress:
 Same pattern as cold-leads:
 
 1. Cached OpenAPI: `jq '.paths."/<path>"' .cold/docs-cache/foxreach-openapi.json`
-2. Raw curl: `curl -X POST https://api.foxreach.io/api/v1/<path> -H "Authorization: Bearer $FOXREACH_API_KEY"`
+2. Raw curl: `curl -X POST https://api.foxreach.io/api/v1/<path> -H "X-API-Key: $FOXREACH_API_KEY"`
 3. Docs: `WebFetch https://docs.foxreach.io/api-reference/<resource>/<action>` (e.g. `/campaigns/start-campaign`)
 
 Never guess endpoint paths. If all three fail: surface the error and stop.

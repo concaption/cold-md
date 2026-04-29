@@ -280,7 +280,7 @@ If winner: clear `.cold/experiments/.active`. If `config.experiments.autoAdvance
 Same CLI → curl → docs pattern as cold-leads/cold-send. The new `inbox categorize-stats` endpoint:
 
 - Cached OpenAPI: `jq '.paths."/inbox/categorize-stats"' .cold/docs-cache/foxreach-openapi.json`
-- Curl: `curl -H "Authorization: Bearer $FOXREACH_API_KEY" "https://api.foxreach.io/api/v1/inbox/categorize-stats?campaignId=<id>&groupBy=variant"`
+- Curl: `curl -H "X-API-Key: $FOXREACH_API_KEY" "https://api.foxreach.io/api/v1/inbox/categorize-stats?campaignId=<id>&groupBy=variant"`
 - Docs: (Mintlify page coming once endpoint is documented; for now, OpenAPI spec is the source of truth)
 
 ## Constraints

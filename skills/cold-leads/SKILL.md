@@ -149,7 +149,7 @@ If a `foxreach` subcommand fails or doesn't exist:
 2. **Raw curl:**
    ```bash
    curl -X POST "https://api.foxreach.io/api/v1/leads/import" \
-     -H "Authorization: Bearer $FOXREACH_API_KEY" \
+     -H "X-API-Key: $FOXREACH_API_KEY" \
      -F "file=@.cold/import.csv" \
      -F "campaignId=$CAMPAIGN_ID"
    ```

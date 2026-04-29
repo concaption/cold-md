@@ -143,7 +143,7 @@ Or skip and reply manually in the FoxReach inbox UI.
 
 Same CLI → curl → docs pattern.
 
-- Curl: `curl -H "Authorization: Bearer $FOXREACH_API_KEY" "https://api.foxreach.io/api/v1/inbox/threads?category=uncategorized"`
+- Curl: `curl -H "X-API-Key: $FOXREACH_API_KEY" "https://api.foxreach.io/api/v1/inbox/threads?category=uncategorized"`
 - Docs: `WebFetch https://docs.foxreach.io/api-reference/inbox/list-threads`
 
 ## Constraints

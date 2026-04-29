@@ -5,12 +5,16 @@ import CopyButton from '../components/CopyButton'
 const INSTALL_CMD = 'curl -fsSL https://cold.md/install | bash'
 
 const SKILLS = [
-  { num: '01', name: 'cold-icp',    desc: 'Build your ICP from a URL (scrape homepage, case studies) or interactive Q&A. Writes icp.md.',               status: 'live', needsKey: false },
-  { num: '02', name: 'cold-leads',  desc: 'Source leads matching icp.md. Enriches, scores, dedupes, writes leads.csv.',                                   status: 'v0.2', needsKey: true  },
-  { num: '03', name: 'cold-draft',  desc: 'Draft openers, bumps, breakups from cold.md. Refuses banned phrases, cites only from ## Proof.',                status: 'live', needsKey: false },
-  { num: '04', name: 'cold-send',   desc: 'Queue a FoxReach campaign with pre-flight safety: lint, audience check, warmup, sending-limit math.',           status: 'v0.2', needsKey: true  },
-  { num: '05', name: 'cold-triage', desc: 'Sort replies into interested / not-now / OOO / bounced. Drafts responses against ## Objections.',               status: 'v0.2', needsKey: true  },
-  { num: '06', name: 'cold-report', desc: 'Daily or weekly digest: deliverability, replies, booked calls. Runs on cron. Posts to Slack or terminal.',      status: 'live', needsKey: true  },
+  { num: '01', name: 'cold-icp',        desc: 'Build your ICP from a URL or Q&A, then validate via web search (competitor scan, title prevalence, pain language). Writes icp.md.',  status: 'live', needsKey: false },
+  { num: '02', name: 'cold-offer',      desc: 'Refine your value prop via competitor pricing + market research. Writes offer.md, proposes a cold.md ## Value diff.',               status: 'live', needsKey: false },
+  { num: '03', name: 'cold-leads',      desc: 'Import a CSV, score each row against icp.md, optional per-lead web research, push survivors to FoxReach.',                          status: 'live', needsKey: true  },
+  { num: '04', name: 'cold-draft',      desc: 'Draft openers, bumps, breakups from cold.md. Variant-pair generation when an experiment is active.',                                status: 'live', needsKey: false },
+  { num: '05', name: 'cold-send',       desc: 'Push to FoxReach with 6 pre-flight checks: banned-phrase lint, audience, plan limits, bounce guard, warmup, duplicates.',           status: 'live', needsKey: true  },
+  { num: '06', name: 'cold-experiment', desc: 'Design the next A/B from the variable tier ladder (subject → opener → CTA → cadence → tone). Writes the protocol.',                 status: 'live', needsKey: false },
+  { num: '07', name: 'cold-learn',      desc: 'Read variant stats, run z-test on interested-reply rate, propose a cold.md diff under the trust ladder.',                           status: 'live', needsKey: true  },
+  { num: '08', name: 'cold-triage',     desc: 'Pull unread inbox, bucket by category, draft responses to interested replies against ## Objections.',                               status: 'live', needsKey: true  },
+  { num: '09', name: 'cold-status',     desc: 'One-screen dashboard: current beliefs, active experiments, pending diffs, suggested next action.',                                  status: 'live', needsKey: false },
+  { num: '10', name: 'cold-report',     desc: 'Daily or weekly digest: deliverability, replies, experiment outcomes, pending diffs. Runs on cron.',                                status: 'live', needsKey: true  },
 ] as const
 
 const SPEC_SNIPPET = `# My Product - cold.md
@@ -51,20 +55,26 @@ export default function Home() {
       {/* Hero */}
       <section className="mx-auto max-w-6xl px-6 pt-12 sm:pt-20 pb-16">
         <div className="flex items-center gap-2 text-xs font-mono text-fox mb-8">
-          <span className="inline-block w-1.5 h-1.5 rounded-full bg-fox" />
-          v0 - six skills, one /cold command, FoxReach-backed
+          <span className="inline-block w-1.5 h-1.5 rounded-full bg-fox animate-pulse" />
+          v0.2 - autoresearch loop. Ten skills, one /cold command.
         </div>
 
         <h1 className="font-display text-hero text-ink max-w-5xl">
-          Your cold outreach,<br />
-          in <span className="italic text-fox">one Claude Code plugin</span>.
+          Cold outreach that<br />
+          <span className="italic text-fox">improves itself</span>.
         </h1>
 
         <p className="mt-8 max-w-2xl text-lg sm:text-xl leading-relaxed text-ink/75">
-          <strong className="text-ink">Not another cold-email skill.</strong> A full suite:
-          ICP builder, lead sourcing, drafter, sender, reply triage, reporter. All wired together.
-          Reads a portable <code className="font-mono text-base px-1.5 py-0.5 bg-fox-tint text-fox rounded">cold.md</code> file.
-          Runs on <a href="https://foxreach.io" className="underline decoration-fox/40 underline-offset-4 hover:decoration-fox">FoxReach</a> infrastructure.
+          <strong className="text-ink">Karpathy-style autoresearch for cold email.</strong> An agent
+          picks the next variable to test, runs an A/B against your real campaign,
+          measures interested-reply rate, and proposes a diff to your{' '}
+          <code className="font-mono text-base px-1.5 py-0.5 bg-fox-tint text-fox rounded">cold.md</code>{' '}
+          policy file. Runs on{' '}
+          <a href="https://foxreach.io" className="underline decoration-fox/40 underline-offset-4 hover:decoration-fox">FoxReach</a>{' '}
+          infrastructure.{' '}
+          <a href="https://foxreach.io/blog/cold-md-autoresearch" className="underline decoration-fox/40 underline-offset-4 hover:decoration-fox">
+            Read the deep dive →
+          </a>
         </p>
 
         <div className="mt-10 flex flex-wrap items-center gap-3">

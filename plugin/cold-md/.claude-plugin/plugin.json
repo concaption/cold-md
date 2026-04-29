@@ -25,10 +25,14 @@
   ],
   "skills": [
     "skills/cold-icp",
+    "skills/cold-offer",
     "skills/cold-leads",
     "skills/cold-draft",
     "skills/cold-send",
+    "skills/cold-experiment",
+    "skills/cold-learn",
     "skills/cold-triage",
+    "skills/cold-status",
     "skills/cold-report"
   ],
   "commands": [

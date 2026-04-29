@@ -142,8 +142,39 @@ Requires user's laptop to be on + Claude Code running. Power-user only.
 - **Round thoughtfully.** Open rates to whole percentages. Bounce rates to one decimal.
 - **Respect time zones.** Default is user's local time zone from `$TZ`; surface the zone in the header.
 
+## Experiment outcomes (autoresearch)
+
+If `.cold/decisions.md` exists, append an "Experiments" section to the digest covering all decisions since the last report (track via a timestamp in `.cold/last-report.json`).
+
+For each concluded experiment, include:
+
+```
+### Tier <N> / <variable>
+- Experiment: <id>
+- Outcome: winner = <arm> | inconclusive
+- Numbers: <arm_a> 5.0% vs <arm_b> 8.0% interested-reply rate
+- Confidence: 95% CI [+0.2, +5.8] (p=0.04)
+- Status: applied via diff | pending review | rejected
+- Belief now locked: <one sentence>
+```
+
+If a diff is pending review, surface it prominently:
+
+```
+⚠ ACTION NEEDED: cold.md diff awaiting your review since <date>
+   .cold/proposed-diff.patch — accept with `git apply` or reject with `rm`
+```
+
+If an experiment is currently in flight, include a "Currently testing" line with days remaining.
+
+After printing, update `.cold/last-report.json`:
+
+```json
+{ "lastReportAt": "2026-04-29T...", "type": "weekly" }
+```
+
 ## References
 
-- FoxReach API docs: https://foxreach.io/docs/api
+- FoxReach API docs: https://docs.foxreach.io/api-reference
 - Dashboard: https://foxreach.io/app
 - cold.md suite: https://cold.md

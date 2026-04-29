@@ -104,8 +104,8 @@ Phase 4 — OBSERVE        status, report
   },
   "foxreach": {
     "baseUrl": "https://api.foxreach.io",
-    "docsUrl": "https://docs.foxreach.io",
-    "openapiUrl": "https://api.foxreach.io/openapi.json",
+    "docsUrl": "https://docs.foxreach.io/api-reference",
+    "openapiUrl": "https://api.foxreach.io/openapi-public.json",
     "cliPath": "foxreach"
   }
 }
@@ -160,14 +160,14 @@ cold-learn behavior:
 
 1. **CLI primary** (`foxreach <subcommand>`)
 2. **Raw curl + cached OpenAPI** (when CLI doesn't cover an endpoint)
-3. **WebFetch docs.foxreach.io** (when stuck on usage)
+3. **WebFetch `https://docs.foxreach.io/api-reference/<resource>/<action>`** (Mintlify docs — when stuck on usage)
 
 ### CLI surface (new — built for this)
 
 ```bash
 # global
 foxreach openapi                          # prints OpenAPI for the agent
-foxreach docs <topic>                     # opens https://docs.foxreach.io/<topic>
+foxreach docs <topic>                     # opens https://docs.foxreach.io/api-reference/<topic>
 
 # accounts
 foxreach accounts list
@@ -211,13 +211,13 @@ When CLI doesn't cover an endpoint, the skill:
 2. Locates the matching path/method
 3. Constructs the curl call with auth header from env (`FOXREACH_API_KEY`)
 4. Executes via Bash, parses JSON response
-5. If 4xx/5xx, fetches `https://docs.foxreach.io/<path-related-page>` for context
+5. If 4xx/5xx, fetches `https://docs.foxreach.io/api-reference/<resource>/<action>` (e.g. `/api-reference/leads/list-leads`) for context
 
 ## API additions to FoxReach (small)
 
 | # | Endpoint | Why | Effort |
 |---|---|---|---|
-| 1 | Confirm `/openapi.json` is public + CORS-allowed | Lets agent self-document | 5 min |
+| 1 | Add `/openapi-public.json` — filtered to `/api/v1/*` only, CORS `*` | Lets agent self-document the public surface without leaking internal /api/auth, /api/admin, /api/billing routes | 15 min |
 | 2 | `GET /api/v1/campaigns/{id}/categorize-stats?from=&to=&groupBy=variant` | Time-series of interested/not_interested/OOO/bounce per variant; data exists in Reply.category + Reply.variantId via EmailLog | 30-45 min |
 | 3 | `POST /api/v1/leads/score-fit` body `{lead, icp_markdown}` → `{score: 0-1, rationale}` (optional, can do client-side) | Server-side ICP-fit scoring | 30 min, optional |
 

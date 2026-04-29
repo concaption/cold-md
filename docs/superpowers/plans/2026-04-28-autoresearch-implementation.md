@@ -71,39 +71,71 @@ Each phase ends with: type-check (where applicable) → manual verify against ac
 
 # Phase 0 — FoxReach API additions
 
-### Task 0.1: Confirm `/openapi.json` public + CORS
+### Task 0.1: Add `/openapi-public.json` (filtered to /api/v1 only)
 
 **Files:** `../foxreach/backend/app/main.py`
 
-- [ ] **Step 1: Inspect current FastAPI setup**
+The default `/openapi.json` exposes the entire app (including internal
+`/api/auth`, `/api/admin`, `/api/billing`, etc.) and is gated behind
+`debug` mode. We add a separate **`/openapi-public.json`** that:
 
-Run: `grep -nE "openapi_url|allow_origins|CORSMiddleware" ../foxreach/backend/app/main.py`
-Expected: existing CORS config + default openapi route at `/openapi.json`.
+1. Always serves regardless of debug mode
+2. Filters paths to `/api/v1/*` only — the publicly contracted, API-key-
+   authenticated surface
+3. Adds `Access-Control-Allow-Origin: *` so any origin can fetch it
 
-- [ ] **Step 2: Verify `/openapi.json` is reachable**
-
-Run: `curl -sI https://api.foxreach.io/openapi.json | head -3`
-Expected: `HTTP/2 200`. If 404, the route isn't exposed — add `openapi_url="/openapi.json"` to FastAPI constructor.
-
-- [ ] **Step 3: Verify CORS allows cold.md plugin to fetch**
-
-The plugin runs locally so origin is typically `null` or `vscode-webview://...`. Check that `allow_origins` includes `"*"` for the openapi route OR add a separate route handler that returns the spec with `Access-Control-Allow-Origin: *`.
-
-If CORS is restrictive, add at the bottom of `main.py`:
+- [ ] **Step 1: Add the route** above the existing `@app.get("/")` block in `main.py`:
 
 ```python
 @app.get("/openapi-public.json", include_in_schema=False)
 async def public_openapi():
+    """
+    Public OpenAPI spec — ONLY the /api/v1/* surface (API-key authenticated).
+    """
+    from fastapi.responses import JSONResponse
+
+    full = app.openapi()
+    filtered_paths = {
+        path: spec
+        for path, spec in full.get("paths", {}).items()
+        if path.startswith("/api/v1/")
+    }
+    public = {
+        **full,
+        "info": {
+            **full.get("info", {}),
+            "title": "FoxReach Public API",
+            "description": (
+                "Public REST API for FoxReach. Authenticate with "
+                "`Authorization: Bearer <FOXREACH_API_KEY>`. "
+                "Full docs: https://docs.foxreach.io/api-reference"
+            ),
+        },
+        "paths": filtered_paths,
+    }
     return JSONResponse(
-        content=app.openapi(),
+        content=public,
         headers={"Access-Control-Allow-Origin": "*"},
     )
 ```
 
+- [ ] **Step 2: Syntax check**
+
+Run: `cd ../foxreach && python -m py_compile backend/app/main.py`
+Expected: no errors.
+
+- [ ] **Step 3: Smoke test after deploy**
+
+```
+curl -s https://api.foxreach.io/openapi-public.json | jq '.paths | keys[]' | head -10
+```
+
+Expected: only paths under `/api/v1/*`. No `/api/auth`, `/api/admin`, `/api/billing`.
+
 - [ ] **Step 4: Commit**
 
 ```bash
-cd ../foxreach && git add backend/app/main.py && git commit -m "feat(api): expose public OpenAPI for cold.md autoresearch agent"
+cd ../foxreach && git add backend/app/main.py && git commit -m "feat(api): add filtered public OpenAPI for cold.md agent"
 ```
 
 ---
@@ -474,7 +506,7 @@ Apply the same pattern. Each needs ~6-10 subcommands matching the FoxReach endpo
 - `templates.js` — list, get, create, update, delete
 - `analytics.js` — campaign-stats, account-stats, workspace-stats
 - `openapi.js` — fetches `/openapi.json` and prints (used by skills as fallback)
-- `docs.js` — opens `https://docs.foxreach.io/<topic>` in default browser; or `--print` to fetch HTML and print
+- `docs.js` — opens `https://docs.foxreach.io/api-reference/<topic>` in default browser; or `--print` to fetch HTML and print
 
 > Important: every command output is JSON to stdout, errors to stderr. This makes piping to `jq` and parsing in skills trivial.
 
@@ -850,7 +882,7 @@ description: Source, enrich, and score leads against icp.md. Imports a CSV via F
 If `foxreach` CLI fails, fall back to:
 - `cat .cold/docs-cache/foxreach-openapi.json | jq '.paths."/leads/import"'` to find the right endpoint
 - `curl -X POST $FOXREACH_BASE_URL/api/v1/leads/import -H "Authorization: Bearer $FOXREACH_API_KEY" -F file=@scored-leads.csv -F campaignId=...`
-- If still stuck: `WebFetch https://docs.foxreach.io/api/leads/import` and read the doc.
+- If still stuck: `WebFetch https://docs.foxreach.io/api-reference/leads/list-leads` (or the matching action page) and read the doc.
 ```
 
 - [ ] **Step 2: Commit**
@@ -985,7 +1017,7 @@ description: Push the active campaign to FoxReach — creates sequences, registe
 If a CLI command fails:
 1. Read `.cold/docs-cache/foxreach-openapi.json` for the correct path/method
 2. Construct curl manually with `Authorization: Bearer $FOXREACH_API_KEY`
-3. If still stuck: `WebFetch https://docs.foxreach.io/api/<resource>`
+3. If still stuck: `WebFetch https://docs.foxreach.io/api-reference/<resource>/<action>` (e.g. `/api-reference/campaigns/start-campaign`)
 
 ## Output
 

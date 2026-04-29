@@ -101,6 +101,65 @@ Conforming means "refuse to ship non-conforming output." Situations where you st
 
 Silent degradation is a bug. Surface the conflict, don't paper over it.
 
+## Experiment mode (autoresearch)
+
+If `.cold/experiments/.active` exists and points at an experiment with a protocol, switch to **variant-pair generation** instead of single drafts.
+
+### Read the active experiment
+
+```
+ACTIVE=$(cat .cold/experiments/.active)
+PROTO=.cold/experiments/$ACTIVE/protocol.md
+```
+
+The protocol declares:
+- `variable`: which dimension is being tested (`subject` | `opener` | `cta` | `cadence` | `tone`)
+- `arms`: array of variant specs (e.g. `[statement, question]`)
+- `cohort_size`: leads per arm
+
+### Generate one variant per arm
+
+For each lead in `.cold/import.csv`, generate `len(arms)` candidate emails:
+
+| Tier | What differs between arms | What stays constant |
+|---|---|---|
+| Tier 1 (subject) | The subject line, matching each arm's pattern | Body, CTA, tone |
+| Tier 2 (opener) | First 2 lines of body | Subject, rest of body, CTA |
+| Tier 3 (CTA) | Last paragraph (the ask) | Subject, opener, middle |
+| Tier 4 (cadence) | Days between bumps in the FoxReach schedule | All copy identical |
+| Tier 5 (tone) | Casual vs. formal voice across the whole message | Subject pattern + CTA framing |
+
+### Output structure
+
+```
+.cold/drafts/<campaign_id>/
+  arm_a_<descriptor>/
+    <leadId>.md     # subject + body + frontmatter (variant=arm_a, leadEmail=...)
+  arm_b_<descriptor>/
+    <leadId>.md
+```
+
+Each draft must:
+- Pass banned-phrase lint from `cold.md ## Banned`
+- Use the lead's `firstName`, `company`, and (if `.cold/research/lead-personalization/<email-hash>.md` exists) the suggested hook from per-lead research
+- Match the arm's pattern definition exactly
+
+### Variant naming for FoxReach
+
+Use `arm_a_<descriptor>` / `arm_b_<descriptor>` so FoxReach variant labels are meaningful in dashboards (e.g. `arm_a_statement`, `arm_b_question`).
+
+### Print summary
+
+```
+Generated 200 drafts (100 per arm) for experiment 2026-W18-subject-statement-vs-question
+  arm_a_statement: 100 drafts
+  arm_b_question:  100 drafts
+Banned-phrase lint: 0 violations
+Next: /cold send
+```
+
+If the experiment file is missing or invalid: print the error and fall back to single-draft mode (don't block the user).
+
 ## References
 
 - `references/spec-v0.md` - the current spec (keep in sync with `cold.md/spec/cold-md-v0.md`).

@@ -1,3 +1,5 @@
+
+
 <!-- Updated: 2026-04-17 -->
 
 ![cold.md](assets/cover.png)
@@ -83,7 +85,7 @@ Spec: [`spec/cold-md-v0.md`](spec/cold-md-v0.md). Also published at [cold.md](ht
 
 ## Configure FoxReach
 
-The skills that send, triage, or report need an API key:
+The skills that source leads, send, triage, or report need an API key:
 
 ```bash
 export FOXREACH_API_KEY=fr_...
